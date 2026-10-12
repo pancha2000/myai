@@ -8,21 +8,22 @@ TURSO_URL = os.getenv("TURSO_DATABASE_URL")
 TURSO_AUTH_TOKEN = os.getenv("TURSO_AUTH_TOKEN")
 
 
-async def get_db_client():
-  """Async කනෙක්ෂන් එකක් ලබා දෙයි."""
+def get_db_client():
+  """Turso client එක ලබා දෙයි.
+
+  (Event Loop එක ක්‍රියාත්මක වන async ෆන්ෂන් එකක් ඇතුළත පමණක් මෙය කෝල් කළ යුතුය).
+  """
   if not TURSO_URL or not TURSO_AUTH_TOKEN:
     raise ValueError(
         "❌ Turso URL හෝ Token .env / Environment Variables වල නැත!"
     )
-
-  return libsql_client.create_client_async(
-      url=TURSO_URL, auth_token=TURSO_AUTH_TOKEN
-  )
+  return libsql_client.create_client(url=TURSO_URL, auth_token=TURSO_AUTH_TOKEN)
 
 
 async def init_database():
   """අවශ්‍ය සියලුම Tables async ලෙස ස්වයංක්‍රීයව සාදයි."""
-  client = await get_db_client()
+  # Event loop එක ඇතුළේදී client එක ලබා ගැනීම
+  client = get_db_client()
 
   # 1. Projects Table
   await client.execute("""
