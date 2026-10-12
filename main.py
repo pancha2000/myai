@@ -6,9 +6,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 
-# App එක ස්ටාර්ට් වෙන මොහොතේදී Event Loop එක ඇතුළේ Database එක Initialize කිරීම
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+  # Event loop එක සක්‍රීය වූ පසු ඩේටාබේස් එක සාදයි
   await init_database()
   yield
 
