@@ -15,7 +15,6 @@ async def get_db_client():
         "❌ Turso URL හෝ Token .env / Environment Variables වල නැත!"
     )
 
-  # Sync වෙනුවට async client එක භාවිත කරයි
   return libsql_client.create_client_async(
       url=TURSO_URL, auth_token=TURSO_AUTH_TOKEN
   )
