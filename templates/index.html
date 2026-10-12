@@ -19,16 +19,15 @@
         <!-- Add Project Test Form -->
         <div class="bg-slate-800 p-6 rounded-xl shadow-lg mb-8 border border-slate-700">
             <h2 class="text-xl font-semibold mb-4 text-cyan-400">➕ Test Add Project</h2>
-            <form action="/add_project" method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <input type="text" name="name" placeholder="Project Name (e.g., MyPythonApp)" required class="bg-slate-900 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-emerald-500">
-                <input type="text" name="description" placeholder="Description" required class="bg-slate-900 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+            <form id="projectForm" class="grid grid-cols-1 md:grid-cols-3 gap-4" onsubmit="submitProject(event)">
+                <input type="text" id="name" placeholder="Project Name (e.g., MyPythonApp)" required class="bg-slate-900 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-emerald-500">
+                <input type="text" id="description" placeholder="Description" required class="bg-slate-900 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-emerald-500">
                 <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded transition">Save to Cloud DB</button>
             </form>
         </div>
 
         <!-- Data Tables Grid -->
         <div class="grid grid-cols-1 gap-8">
-            <!-- Projects Table -->
             <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
                 <h2 class="text-xl font-semibold mb-4 text-cyan-400">📂 Projects Table</h2>
                 <div class="overflow-x-auto">
@@ -43,7 +42,7 @@
                         </thead>
                         <tbody>
                             {% for p in projects %}
-                            <tr class="border-b border-slate-700/50 hover:bg-slate-750">
+                            <tr class="border-b border-slate-700/50">
                                 <td class="p-3">{{ p.id }}</td>
                                 <td class="p-3 font-medium text-emerald-300">{{ p.name }}</td>
                                 <td class="p-3 text-slate-300">{{ p.description }}</td>
@@ -56,36 +55,27 @@
                     </table>
                 </div>
             </div>
-
-            <!-- Master Plans Table -->
-            <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
-                <h2 class="text-xl font-semibold mb-4 text-cyan-400">🗺️ Master Plan Tree (Tasks)</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-slate-700 text-slate-400">
-                                <th class="p-3">ID</th>
-                                <th class="p-3">Project ID</th>
-                                <th class="p-3">Task Title</th>
-                                <th class="p-3">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for t in plans %}
-                            <tr class="border-b border-slate-700/50">
-                                <td class="p-3">{{ t.id }}</td>
-                                <td class="p-3">{{ t.project_id }}</td>
-                                <td class="p-3">{{ t.task_title }}</td>
-                                <td class="p-3"><span class="bg-amber-900 text-amber-300 px-2 py-0.5 rounded text-xs">{{ t.status }}</span></td>
-                            </tr>
-                            {% else %}
-                            <tr><td colspan="4" class="p-4 text-center text-slate-500">No tasks planned yet.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     </div>
+
+    <script>
+        async function submitProject(event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
+
+            const response = await fetch('/add_project', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, description })
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                alert('Error saving project!');
+            }
+        }
+    </script>
 </body>
 </html>
