@@ -4,4 +4,3 @@ libsql-client
 python-dotenv
 jinja2
 duckduckgo_search
-python-multipart
