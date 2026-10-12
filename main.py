@@ -1,20 +1,18 @@
 from contextlib import asynccontextmanager
 import os
 from core.db import get_db_client, init_database
-from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-  # Event loop එක සක්‍රීය වූ පසු ඩේටාබේස් එක සාදයි
   await init_database()
   yield
 
 
 app = FastAPI(title="Local Coding Agent Storage Portal", lifespan=lifespan)
-
 templates = Jinja2Templates(directory="templates")
 
 
@@ -57,14 +55,19 @@ async def dashboard(request: Request):
 
 
 @app.post("/add_project")
-async def add_project(name: str = Form(...), description: str = Form(...)):
+async def add_project(request: Request):
+  # JSON ලෙස එන දත්ත ලබා ගැනීම (Multipart අවශ්‍යම නැත)
+  data = await request.json()
+  name = data.get("name")
+  description = data.get("description")
+
   client = await get_db_client()
   await client.execute(
       "INSERT INTO projects (name, description) VALUES (?, ?)",
       [name, description],
   )
   await client.close()
-  return RedirectResponse(url="/", status_code=303)
+  return {"status": "success"}
 
 
 if __name__ == "__main__":
