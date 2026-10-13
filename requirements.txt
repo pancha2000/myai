@@ -3,4 +3,7 @@ uvicorn
 libsql-client
 python-dotenv
 jinja2
+ddgs
 duckduckgo_search
+requests
+beautifulsoup4
