@@ -6,76 +6,279 @@
     <title>Coding Agent Storage Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans leading-normal tracking-normal">
-    <div class="container mx-auto p-6">
-        <header class="mb-8 border-b border-slate-700 pb-4 flex justify-between items-center">
-            <div>
-                <h1 class="text-3xl font-bold text-emerald-400">🛡️ Agent Storage Portal</h1>
-                <p class="text-slate-400 text-sm">Turso Cloud DB Monitoring & Management Panel</p>
-            </div>
-            <span class="bg-emerald-900 text-emerald-300 text-xs px-3 py-1 rounded-full border border-emerald-700">Connected to Turso Cloud</span>
-        </header>
+<body class="bg-slate-900 text-slate-100 font-sans">
+<div class="container mx-auto p-4 md:p-6 max-w-7xl">
 
-        <!-- Add Project Test Form -->
-        <div class="bg-slate-800 p-6 rounded-xl shadow-lg mb-8 border border-slate-700">
-            <h2 class="text-xl font-semibold mb-4 text-cyan-400">➕ Test Add Project</h2>
-            <form id="projectForm" class="grid grid-cols-1 md:grid-cols-3 gap-4" onsubmit="submitProject(event)">
-                <input type="text" id="name" placeholder="Project Name (e.g., MyPythonApp)" required class="bg-slate-900 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-emerald-500">
-                <input type="text" id="description" placeholder="Description" required class="bg-slate-900 border border-slate-700 rounded p-2 text-slate-100 focus:outline-none focus:border-emerald-500">
-                <button type="submit" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2 px-4 rounded transition">Save to Cloud DB</button>
+    <header class="mb-6 border-b border-slate-700 pb-4 flex flex-wrap gap-3 justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-emerald-400">🛡️ Agent Storage Portal</h1>
+            <p class="text-slate-400 text-sm">Turso Cloud DB · Gatekeeper search · Local AI jobs</p>
+        </div>
+        <div class="flex gap-2 text-xs">
+            <span class="bg-emerald-900 text-emerald-300 px-3 py-1 rounded-full border border-emerald-700">Turso connected</span>
+            <span class="bg-slate-800 text-slate-300 px-3 py-1 rounded-full border border-slate-700">
+                {{ projects|length }} projects · {{ plans|length }} tasks · {{ hints|length }} hints · {{ cache|length }} cached
+            </span>
+        </div>
+    </header>
+
+    <div id="toast" class="hidden fixed top-4 right-4 z-50 px-4 py-2 rounded shadow-lg text-sm"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Add project -->
+        <section class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+            <h2 class="text-lg font-semibold mb-3 text-cyan-400">➕ New Project</h2>
+            <form id="projectForm" class="space-y-3">
+                <input id="name" required maxlength="200" placeholder="Project name" class="w-full bg-slate-900 border border-slate-700 rounded p-2 focus:outline-none focus:border-emerald-500">
+                <textarea id="description" rows="3" maxlength="4000" placeholder="What should be built? (the more detail, the better the plan)" class="w-full bg-slate-900 border border-slate-700 rounded p-2 focus:outline-none focus:border-emerald-500"></textarea>
+                <button class="bg-emerald-600 hover:bg-emerald-500 font-semibold py-2 px-4 rounded transition">Save to Cloud DB</button>
             </form>
-        </div>
+        </section>
 
-        <!-- Data Tables Grid -->
-        <div class="grid grid-cols-1 gap-8">
-            <div class="bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-700">
-                <h2 class="text-xl font-semibold mb-4 text-cyan-400">📂 Projects Table</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-slate-700 text-slate-400">
-                                <th class="p-3">ID</th>
-                                <th class="p-3">Name</th>
-                                <th class="p-3">Description</th>
-                                <th class="p-3">Created At</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in projects %}
-                            <tr class="border-b border-slate-700/50">
-                                <td class="p-3">{{ p.id }}</td>
-                                <td class="p-3 font-medium text-emerald-300">{{ p.name }}</td>
-                                <td class="p-3 text-slate-300">{{ p.description }}</td>
-                                <td class="p-3 text-slate-400 text-sm">{{ p.created_at }}</td>
-                            </tr>
-                            {% else %}
-                            <tr><td colspan="4" class="p-4 text-center text-slate-500">No projects found.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+        <!-- Search -->
+        <section class="bg-slate-800 p-5 rounded-xl border border-slate-700">
+            <h2 class="text-lg font-semibold mb-3 text-cyan-400">🌐 Research &amp; Cache</h2>
+            <form id="searchForm" class="space-y-3">
+                <input id="query" required minlength="2" maxlength="200" placeholder="e.g. fastapi lifespan events" class="w-full bg-slate-900 border border-slate-700 rounded p-2 focus:outline-none focus:border-emerald-500">
+                <label class="flex items-center gap-2 text-sm text-slate-400"><input type="checkbox" id="force"> Ignore cache (fetch fresh)</label>
+                <button id="searchBtn" class="bg-cyan-700 hover:bg-cyan-600 font-semibold py-2 px-4 rounded transition">Search &amp; Store</button>
+            </form>
+            <pre id="searchResult" class="hidden mt-3 max-h-48 overflow-auto text-xs bg-slate-900 p-3 rounded border border-slate-700 whitespace-pre-wrap"></pre>
+        </section>
     </div>
 
-    <script>
-        async function submitProject(event) {
-            event.preventDefault();
-            const name = document.getElementById('name').value;
-            const description = document.getElementById('description').value;
+    <!-- Projects -->
+    <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 mb-6">
+        <h2 class="text-lg font-semibold mb-3 text-cyan-400">📂 Projects</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead><tr class="border-b border-slate-700 text-slate-400">
+                    <th class="p-2">ID</th><th class="p-2">Name</th><th class="p-2">Description</th><th class="p-2">Created</th><th class="p-2">Actions</th>
+                </tr></thead>
+                <tbody>
+                {% for p in projects %}
+                <tr class="border-b border-slate-700/50 align-top">
+                    <td class="p-2">{{ p.id }}</td>
+                    <td class="p-2 font-medium text-emerald-300">{{ p.name }}</td>
+                    <td class="p-2 text-slate-300">{{ p.description }}</td>
+                    <td class="p-2 text-slate-400 whitespace-nowrap">{{ p.created_at }}</td>
+                    <td class="p-2 whitespace-nowrap">
+                        <button data-act="plan" data-id="{{ p.id }}" class="bg-emerald-700 hover:bg-emerald-600 text-xs px-2 py-1 rounded">🧠 Generate plan</button>
+                        <button data-act="del-project" data-id="{{ p.id }}" class="bg-red-800 hover:bg-red-700 text-xs px-2 py-1 rounded">Delete</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="p-4 text-center text-slate-500">No projects yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
 
-            const response = await fetch('/add_project', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, description })
+    <!-- Jobs -->
+    <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 mb-6">
+        <h2 class="text-lg font-semibold mb-1 text-cyan-400">⚙️ Local AI Jobs</h2>
+        <p class="text-xs text-slate-500 mb-3">Jobs are processed by <code>python worker.py</code> on your laptop (Ollama). {% if has_active_jobs %}Auto-refreshing while jobs are active…{% endif %}</p>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead><tr class="border-b border-slate-700 text-slate-400">
+                    <th class="p-2">ID</th><th class="p-2">Type</th><th class="p-2">Payload</th><th class="p-2">Status</th><th class="p-2">Result</th><th class="p-2">Updated</th>
+                </tr></thead>
+                <tbody>
+                {% for j in jobs %}
+                <tr class="border-b border-slate-700/50">
+                    <td class="p-2">{{ j.id }}</td>
+                    <td class="p-2">{{ j.job_type }}</td>
+                    <td class="p-2 text-slate-400 text-xs">{{ j.payload }}</td>
+                    <td class="p-2">
+                        <span class="px-2 py-0.5 rounded text-xs
+                            {% if j.status == 'done' %}bg-emerald-900 text-emerald-300
+                            {% elif j.status == 'error' %}bg-red-900 text-red-300
+                            {% elif j.status == 'running' %}bg-amber-900 text-amber-300
+                            {% else %}bg-slate-700 text-slate-300{% endif %}">{{ j.status }}</span>
+                    </td>
+                    <td class="p-2 text-slate-300 text-xs">{{ j.result or '' }}</td>
+                    <td class="p-2 text-slate-400 text-xs whitespace-nowrap">{{ j.updated_at }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="p-4 text-center text-slate-500">No jobs yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Master plan -->
+    <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 mb-6">
+        <h2 class="text-lg font-semibold mb-3 text-cyan-400">🗺️ Master Plan</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead><tr class="border-b border-slate-700 text-slate-400">
+                    <th class="p-2">ID</th><th class="p-2">Project</th><th class="p-2">Task</th><th class="p-2">Description</th><th class="p-2">Status</th>
+                </tr></thead>
+                <tbody>
+                {% for t in plans %}
+                <tr class="border-b border-slate-700/50 align-top">
+                    <td class="p-2">{{ t.id }}</td>
+                    <td class="p-2 text-slate-400">{{ t.project_name }}</td>
+                    <td class="p-2 {% if t.depth == 0 %}font-semibold text-emerald-300{% else %}pl-8 text-slate-200{% endif %}">{% if t.depth %}↳ {% endif %}{{ t.task_title }}</td>
+                    <td class="p-2 text-slate-300">{{ t.task_description }}</td>
+                    <td class="p-2">
+                        <select data-act="status" data-id="{{ t.id }}" class="bg-slate-900 border border-slate-700 rounded p-1 text-xs">
+                            {% for s in ['Pending', 'In Progress', 'Done'] %}
+                            <option {% if t.status == s %}selected{% endif %}>{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="p-4 text-center text-slate-500">No tasks yet. Press “Generate plan” on a project.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Hints -->
+    <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 mb-6">
+        <h2 class="text-lg font-semibold mb-3 text-cyan-400">💡 Hints Memory</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead><tr class="border-b border-slate-700 text-slate-400">
+                    <th class="p-2">ID</th><th class="p-2">Project</th><th class="p-2">Module</th><th class="p-2">Hint</th><th class="p-2">Updated</th><th class="p-2"></th>
+                </tr></thead>
+                <tbody>
+                {% for h in hints %}
+                <tr class="border-b border-slate-700/50 align-top">
+                    <td class="p-2">{{ h.id }}</td>
+                    <td class="p-2 text-slate-400">{{ h.project_name }}</td>
+                    <td class="p-2 text-emerald-300">{{ h.module_name }}</td>
+                    <td class="p-2 text-slate-300">{{ h.hint_content }}</td>
+                    <td class="p-2 text-slate-400 text-xs whitespace-nowrap">{{ h.updated_at }}</td>
+                    <td class="p-2"><button data-act="del-hint" data-id="{{ h.id }}" class="bg-red-800 hover:bg-red-700 text-xs px-2 py-1 rounded">✕</button></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="p-4 text-center text-slate-500">No hints yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Knowledge cache -->
+    <section class="bg-slate-800 p-5 rounded-xl border border-slate-700 mb-6">
+        <h2 class="text-lg font-semibold mb-3 text-cyan-400">📚 Knowledge Cache</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead><tr class="border-b border-slate-700 text-slate-400">
+                    <th class="p-2">ID</th><th class="p-2">Keyword</th><th class="p-2">Data</th><th class="p-2">Fetched</th><th class="p-2"></th>
+                </tr></thead>
+                <tbody>
+                {% for c in cache %}
+                <tr class="border-b border-slate-700/50 align-top">
+                    <td class="p-2">{{ c.id }}</td>
+                    <td class="p-2 text-emerald-300">{{ c.query_keyword }}</td>
+                    <td class="p-2 text-slate-300">
+                        <details>
+                            <summary class="cursor-pointer text-slate-400">{{ c.sources|length }} sources · {{ c.clean_data|length }} chars</summary>
+                            <ul class="text-xs my-2 list-disc pl-5">
+                                {% for s in c.sources %}<li><a class="text-cyan-400 hover:underline" href="{{ s.url }}" target="_blank" rel="noopener noreferrer">{{ s.title or s.url }}</a></li>{% endfor %}
+                            </ul>
+                            <pre class="text-xs max-h-64 overflow-auto bg-slate-900 p-2 rounded whitespace-pre-wrap">{{ c.clean_data[:4000] }}</pre>
+                        </details>
+                    </td>
+                    <td class="p-2 text-slate-400 text-xs whitespace-nowrap">{{ c.fetched_at }}</td>
+                    <td class="p-2"><button data-act="del-cache" data-id="{{ c.id }}" class="bg-red-800 hover:bg-red-700 text-xs px-2 py-1 rounded">✕</button></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="p-4 text-center text-slate-500">Cache is empty.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<script>
+    function toast(msg, ok = true) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className = 'fixed top-4 right-4 z-50 px-4 py-2 rounded shadow-lg text-sm ' +
+            (ok ? 'bg-emerald-700' : 'bg-red-700');
+        setTimeout(() => t.classList.add('hidden'), 3500);
+    }
+
+    async function api(method, url, body) {
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: body ? JSON.stringify(body) : undefined
+        });
+        let data = {};
+        try { data = await res.json(); } catch (e) {}
+        if (!res.ok) throw new Error(data.detail || ('HTTP ' + res.status));
+        return data;
+    }
+
+    document.getElementById('projectForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            await api('POST', '/add_project', {
+                name: document.getElementById('name').value,
+                description: document.getElementById('description').value
             });
+            location.reload();
+        } catch (err) { toast(err.message, false); }
+    });
 
-            if (response.ok) {
-                window.location.reload();
-            } else {
-                alert('Error saving project!');
+    document.getElementById('searchForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('searchBtn');
+        const out = document.getElementById('searchResult');
+        btn.disabled = true; btn.textContent = 'Searching…';
+        try {
+            const r = await api('POST', '/api/search', {
+                query: document.getElementById('query').value,
+                force: document.getElementById('force').checked
+            });
+            out.textContent = (r.cached ? '[from cache]\n' : '[fetched from web]\n') + r.preview;
+            out.classList.remove('hidden');
+            toast('Saved to knowledge cache');
+            setTimeout(() => location.reload(), 2500);
+        } catch (err) { toast(err.message, false); }
+        btn.disabled = false; btn.textContent = 'Search & Store';
+    });
+
+    document.addEventListener('click', async (e) => {
+        const b = e.target.closest('button[data-act]');
+        if (!b) return;
+        const id = b.dataset.id, act = b.dataset.act;
+        try {
+            if (act === 'plan') {
+                await api('POST', `/api/projects/${id}/plan`);
+                toast('Queued – make sure worker.py is running on your laptop');
+                setTimeout(() => location.reload(), 800);
+                return;
             }
-        }
-    </script>
+            const urls = { 'del-project': `/api/projects/${id}`, 'del-hint': `/api/hints/${id}`, 'del-cache': `/api/cache/${id}` };
+            if (!confirm('Delete this item?')) return;
+            await api('DELETE', urls[act]);
+            location.reload();
+        } catch (err) { toast(err.message, false); }
+    });
+
+    document.addEventListener('change', async (e) => {
+        const s = e.target.closest('select[data-act="status"]');
+        if (!s) return;
+        try {
+            await api('PATCH', `/api/tasks/${s.dataset.id}`, { status: s.value });
+            toast('Status updated');
+        } catch (err) { toast(err.message, false); }
+    });
+
+    {% if has_active_jobs %}
+    setTimeout(() => location.reload(), 8000);
+    {% endif %}
+</script>
 </body>
 </html>
